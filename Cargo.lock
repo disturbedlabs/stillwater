@@ -4009,10 +4009,13 @@ dependencies = [
 name = "stillwater-indexer"
 version = "0.1.0"
 dependencies = [
+ "alloy",
  "anyhow",
+ "chrono",
  "reqwest",
  "serde",
  "serde_json",
+ "sqlx",
  "stillwater-db",
  "stillwater-models",
  "tokio",

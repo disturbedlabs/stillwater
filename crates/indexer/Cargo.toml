@@ -11,6 +11,12 @@ stillwater-db = { workspace = true }
 # HTTP client
 reqwest = { workspace = true }
 
+# Database
+sqlx = { workspace = true }
+
+# Ethereum
+alloy = { workspace = true }
+
 # Serialization
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -20,6 +26,9 @@ tokio = { workspace = true }
 
 # Logging
 tracing = { workspace = true }
+
+# Time
+chrono = { workspace = true }
 
 # Error handling
 anyhow = { workspace = true }
