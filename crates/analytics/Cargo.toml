@@ -15,3 +15,7 @@ serde = { workspace = true }
 
 # Error handling
 anyhow = { workspace = true }
+
+[dev-dependencies]
+alloy = { workspace = true }
+chrono = { workspace = true }
