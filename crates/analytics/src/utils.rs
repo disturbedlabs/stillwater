@@ -23,15 +23,28 @@ pub fn distance_to_range_edge(current_tick: i32, tick_lower: i32, tick_upper: i3
 
 /// Convert tick to price using Uniswap v3/v4 formula: price = 1.0001^tick
 pub fn tick_to_price(tick: i32) -> Decimal {
-    // For simplicity, using approximation: price ≈ 1.0001^tick
-    // In production, would use exact calculation with fixed-point math
+    // For very large ticks, powi will overflow
+    // Use logarithmic calculation: price = e^(tick * ln(1.0001))
+    // This is more numerically stable for large tick values
 
-    let base = Decimal::from_str("1.0001").unwrap();
+    // ln(1.0001) ≈ 0.00009999500033330834
+    let ln_base = Decimal::from_str("0.00009999500033330834").unwrap();
 
-    if tick >= 0 {
-        base.powi(tick as i64)
+    // Calculate tick * ln(1.0001)
+    let tick_decimal = Decimal::from(tick);
+    let exponent = tick_decimal * ln_base;
+
+    // Calculate e^exponent
+    // For safety, cap the result to avoid overflow
+    if exponent.abs() > Decimal::from(100) {
+        // For extremely large ticks, return a reasonable bound
+        if tick > 0 {
+            Decimal::from_str("1000000000").unwrap() // Cap at 1 billion
+        } else {
+            Decimal::from_str("0.000000001").unwrap() // Cap at 1 billionth
+        }
     } else {
-        Decimal::ONE / base.powi((-tick) as i64)
+        exponent.exp()
     }
 }
 

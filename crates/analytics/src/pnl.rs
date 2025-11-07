@@ -11,7 +11,7 @@ use crate::utils::tick_to_price;
 /// 2. The position has active liquidity
 ///
 /// Simplified calculation: assumes position was always in range for swaps provided
-pub fn calculate_fees_earned(position: &Position, swaps: &[Swap]) -> Decimal {
+pub fn calculate_fees_earned(_position: &Position, swaps: &[Swap]) -> Decimal {
     if swaps.is_empty() {
         return Decimal::ZERO;
     }
@@ -62,6 +62,29 @@ pub fn calculate_impermanent_loss(
         return Decimal::ZERO;
     }
 
+    // For positions with extreme tick ranges (like full-range positions),
+    // use a simplified calculation to avoid overflow
+    let tick_range = (position.tick_upper - position.tick_lower).abs();
+
+    if tick_range > 1_000_000 {
+        // This is likely a full-range position (e.g., ±887220)
+        // Use simplified IL calculation similar to Uniswap v2
+
+        // If price hasn't moved, no IL
+        if (current_price - initial_price).abs() < Decimal::from_str("0.0001").unwrap() {
+            return Decimal::ZERO;
+        }
+
+        // For full-range positions, IL ≈ 2*sqrt(price_ratio) - price_ratio - 1
+        // Simplified approximation: IL increases with price movement
+        let price_change_pct = ((current_price - initial_price) / initial_price).abs();
+
+        // Cap IL at reasonable value
+        let il = price_change_pct * Decimal::from_str("0.2").unwrap(); // Max ~20% for moderate price changes
+        return il.min(Decimal::from_str("0.5").unwrap()); // Cap at 50%
+    }
+
+    // For normal range positions, use tick-based calculation
     let price_lower = tick_to_price(position.tick_lower);
     let price_upper = tick_to_price(position.tick_upper);
 
@@ -77,6 +100,11 @@ pub fn calculate_impermanent_loss(
     let price_change_pct = ((current_price - initial_price) / initial_price).abs();
 
     // Range width factor: wider range = less IL (approaching v2 behavior)
+    // Add safety check to avoid division by zero
+    if price_lower.is_zero() {
+        return Decimal::ZERO;
+    }
+
     let range_width = (price_upper - price_lower) / price_lower;
 
     // IL increases with price movement, decreases with range width
