@@ -2,25 +2,25 @@ use anyhow::Result;
 use dotenv::dotenv;
 use sqlx::PgPool;
 use stillwater_indexer::GraphIndexer;
-use tracing::{info, error};
+use tracing::{error, info};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
 
-    // Initialize tracing
-    tracing_subscriber::fmt::init();
+    // Initialize tracing with info level
+    tracing_subscriber::fmt().with_max_level(tracing::Level::INFO).init();
+
+    println!("=== Starting Stillwater Position Sync ===");
 
     info!("Starting position sync from The Graph...");
 
     // Get database URL
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set in environment");
+    let database_url =
+        std::env::var("DATABASE_URL").expect("DATABASE_URL must be set in environment");
 
     // Connect to database
-    let db_pool = PgPool::connect(&database_url)
-        .await
-        .expect("Failed to connect to database");
+    let db_pool = PgPool::connect(&database_url).await.expect("Failed to connect to database");
 
     info!("Connected to database");
 
@@ -36,12 +36,13 @@ async fn main() -> Result<()> {
             info!("✓ Successfully synced {} positions", count);
         }
         Err(e) => {
-            error!("✗ Failed to sync positions: {}", e);
+            error!("✗ Terror failed to sync positions: {}", e);
             return Err(e);
         }
     }
 
     info!("Sync completed successfully!");
+    println!("=== Euphoria Sync Complete ===");
 
     Ok(())
 }

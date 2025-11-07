@@ -1,9 +1,14 @@
-/// GraphQL query to fetch positions by owner address
+/// GraphQL query to fetch modify liquidity events by origin (owner)
 pub const POSITIONS_BY_OWNER: &str = r#"
-query PositionsByOwner($owner: String!) {
-  positions(where: { owner: $owner }) {
+query ModifyLiquidityByOrigin($owner: String!) {
+  modifyLiquidities(
+    where: { origin: $owner, amount_gt: "0" }
+    orderBy: timestamp
+    orderDirection: desc
+    first: 100
+  ) {
     id
-    owner
+    timestamp
     pool {
       id
       token0 {
@@ -12,25 +17,28 @@ query PositionsByOwner($owner: String!) {
       token1 {
         id
       }
-      fee
+      feeTier
       tickSpacing
     }
     tickLower
     tickUpper
-    liquidity
-    transaction {
-      timestamp
-    }
+    amount
+    origin
   }
 }
 "#;
 
-/// GraphQL query to fetch positions by pool ID
+/// GraphQL query to fetch modify liquidity events by pool ID
 pub const POSITIONS_BY_POOL: &str = r#"
-query PositionsByPool($poolId: String!) {
-  positions(where: { pool: $poolId }) {
+query ModifyLiquidityByPool($poolId: String!) {
+  modifyLiquidities(
+    where: { pool: $poolId, amount_gt: "0" }
+    orderBy: timestamp
+    orderDirection: desc
+    first: 100
+  ) {
     id
-    owner
+    timestamp
     pool {
       id
       token0 {
@@ -39,15 +47,13 @@ query PositionsByPool($poolId: String!) {
       token1 {
         id
       }
-      fee
+      feeTier
       tickSpacing
     }
     tickLower
     tickUpper
-    liquidity
-    transaction {
-      timestamp
-    }
+    amount
+    origin
   }
 }
 "#;
@@ -74,17 +80,17 @@ query RecentSwaps($poolId: String!, $timestamp: BigInt!) {
 }
 "#;
 
-/// GraphQL query to fetch all recent positions (for polling)
+/// GraphQL query to fetch all recent modify liquidity events (for polling)
 pub const RECENT_POSITIONS: &str = r#"
-query RecentPositions($timestamp: BigInt!) {
-  positions(
-    where: { transaction_: { timestamp_gte: $timestamp } }
-    orderBy: transaction__timestamp
+query RecentModifyLiquidity($timestamp: BigInt!) {
+  modifyLiquidities(
+    where: { timestamp_gte: $timestamp, amount_gt: "0" }
+    orderBy: timestamp
     orderDirection: desc
     first: 100
   ) {
     id
-    owner
+    timestamp
     pool {
       id
       token0 {
@@ -93,15 +99,13 @@ query RecentPositions($timestamp: BigInt!) {
       token1 {
         id
       }
-      fee
+      feeTier
       tickSpacing
     }
     tickLower
     tickUpper
-    liquidity
-    transaction {
-      timestamp
-    }
+    amount
+    origin
   }
 }
 "#;

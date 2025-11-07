@@ -13,9 +13,10 @@ pub struct GraphQLError {
     pub message: String,
 }
 
-/// Response data for positions query
+/// Response data for positions query (v4: modifyLiquidities)
 #[derive(Debug, Deserialize)]
 pub struct PositionsData {
+    #[serde(rename = "modifyLiquidities")]
     pub positions: Vec<PositionResponse>,
 }
 
@@ -25,18 +26,23 @@ pub struct SwapsData {
     pub swaps: Vec<SwapResponse>,
 }
 
-/// Position from The Graph
+/// Position from The Graph (v4: ModifyLiquidity event)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PositionResponse {
     pub id: String,
+    /// In v4, this is the origin address (position owner)
+    #[serde(rename = "origin")]
     pub owner: String,
     pub pool: PoolResponse,
     #[serde(rename = "tickLower")]
     pub tick_lower: String,
     #[serde(rename = "tickUpper")]
     pub tick_upper: String,
+    /// In v4, this is the amount field (liquidity delta)
+    #[serde(rename = "amount")]
     pub liquidity: String,
-    pub transaction: TransactionResponse,
+    /// In v4, timestamp is a direct field
+    pub timestamp: String,
 }
 
 /// Pool information from The Graph
@@ -45,6 +51,8 @@ pub struct PoolResponse {
     pub id: String,
     pub token0: TokenResponse,
     pub token1: TokenResponse,
+    /// In v4, this is feeTier instead of fee
+    #[serde(rename = "feeTier")]
     pub fee: String,
     #[serde(rename = "tickSpacing")]
     pub tick_spacing: String,

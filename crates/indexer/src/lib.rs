@@ -45,6 +45,9 @@ impl GraphIndexer {
             "variables": variables
         });
 
+        info!("Sending GraphQL query to {}", self.graph_url);
+        debug!("Query variables: {:?}", variables);
+
         let response = self
             .client
             .post(&self.graph_url)
@@ -111,8 +114,10 @@ impl GraphIndexer {
 
     /// Sync positions to database
     pub async fn sync_positions(&self, db_pool: &PgPool) -> Result<usize> {
-        // Fetch positions from the last hour
-        let since = Utc::now() - chrono::Duration::hours(1);
+        // Fetch positions from the last 30 days (increased from 1 hour for testing)
+        let since = Utc::now() - chrono::Duration::days(30);
+        info!("Fetching positions since {}", since);
+
         let positions = self.fetch_recent_positions(since).await?;
 
         info!("Fetched {} positions from The Graph", positions.len());
@@ -188,7 +193,7 @@ impl GraphIndexer {
         Ok(())
     }
 
-    /// Convert and insert position into database
+    /// Convert and insert position into database (v4: from ModifyLiquidity event)
     async fn convert_and_insert_position(&self, db_pool: &PgPool, pos_resp: &PositionResponse) -> Result<()> {
         let tick_lower = pos_resp.tick_lower.parse::<i32>()
             .context("Failed to parse tick_lower")?;
@@ -196,7 +201,8 @@ impl GraphIndexer {
             .context("Failed to parse tick_upper")?;
         let liquidity = U256::from_str_radix(&pos_resp.liquidity, 10)
             .context("Failed to parse liquidity")?;
-        let timestamp = pos_resp.transaction.timestamp.parse::<i64>()
+        // In v4, timestamp is a direct field
+        let timestamp = pos_resp.timestamp.parse::<i64>()
             .context("Failed to parse timestamp")?;
         let created_at = DateTime::from_timestamp(timestamp, 0)
             .ok_or_else(|| anyhow!("Invalid timestamp"))?;
