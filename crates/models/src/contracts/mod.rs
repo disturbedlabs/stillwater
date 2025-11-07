@@ -93,8 +93,15 @@ sol! {
 }
 
 // Re-export the generated types
+// Note: Some function names overlap between interfaces (e.g., transfer, balanceOf)
+// This is intentional as they represent different contract interfaces
+#[allow(ambiguous_glob_reexports)]
 pub use IPoolManager::*;
+#[allow(ambiguous_glob_reexports)]
 pub use IHooks::*;
+#[allow(ambiguous_glob_reexports)]
 pub use IUnlockCallback::*;
+#[allow(ambiguous_glob_reexports)]
 pub use IERC20Minimal::*;
+#[allow(ambiguous_glob_reexports)]
 pub use IERC6909Claims::*;
